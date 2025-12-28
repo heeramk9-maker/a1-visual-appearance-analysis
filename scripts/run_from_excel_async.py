@@ -33,20 +33,20 @@ from app.vision_client import mock_vision_client
 from app.aggregator import aggregate_results
 from app.prompts import SYSTEM_PROMPT, TASK_PROMPT
 
-EXCEL_PATH = Path("data/A1.0_data_product_images.xlsx")
+DEFAULT_EXCEL_PATH = Path("data/A1.0_data_product_images.xlsx")
 
 PRODUCT_COL = "product_id"
 IMAGE_COL = "image_url"
 
-if not EXCEL_PATH.exists():
-    print(f"Excel file not found: {EXCEL_PATH}. Place the company-provided Excel file at this path and try again.")
-    raise SystemExit(1)
 
-
-async def main_async(concurrency: int = 5) -> None:
+async def main_async(excel_path: Path, concurrency: int = 5) -> None:
     # 1. Load Excel (company-provided, read-only)
+    if not excel_path.exists():
+        print(f"Excel file not found: {excel_path}. Place the company-provided Excel file at this path and try again.")
+        raise SystemExit(1)
+
     try:
-        df = pd.read_excel(EXCEL_PATH)
+        df = pd.read_excel(excel_path)
     except Exception as e:
         msg = str(e)
         if "openpyxl" in msg.lower():
@@ -147,10 +147,11 @@ def main(argv: list[str] | None = None) -> None:
     argv = argv if argv is not None else sys.argv[1:]
     parser = argparse.ArgumentParser()
     parser.add_argument("--concurrency", type=int, default=5, help="Max concurrent images per product")
+    parser.add_argument("--excel-file", type=str, default=str(DEFAULT_EXCEL_PATH), help="Path to Excel file to process")
     args = parser.parse_args(argv)
 
     try:
-        asyncio.run(main_async(concurrency=args.concurrency))
+        asyncio.run(main_async(Path(args.excel_file), concurrency=args.concurrency))
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user")
 

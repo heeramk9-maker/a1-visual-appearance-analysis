@@ -124,10 +124,18 @@ python scripts/run_demo_mock.py
 
 Both directories contain functionally equivalent JSON and CSV outputs; async runners are provided for throughput improvements and do not change the output schema or aggregation semantics.
 
-**Run with Excel input**
+**Run with Excel input (sync)**
 
 ```bash
-python scripts/run_from_excel.py data/A1.0_data_product_images.xlsx
+# Place your Excel file at data/A1.0_data_product_images.xlsx, or provide a custom path
+python scripts/run_from_excel.py --excel-file data/A1.0_data_product_images.xlsx
+```
+
+**Run with Excel input (async)**
+
+```bash
+# Async runner supports concurrency and custom Excel path
+python scripts/run_from_excel_async.py --excel-file data/A1.0_data_product_images.xlsx --concurrency 5
 ```
 
 **Optional: Real AI mode**
