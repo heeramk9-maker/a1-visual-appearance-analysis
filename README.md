@@ -241,52 +241,49 @@ This prototype prioritizes clarity, correctness, and extensibility over UI polis
 
 
 
-**Real AI Mode (Optional)**
+**Real AI Mode (Optional — Gemini)**
 
-Set the `OPENAI_API_KEY` environment variable before running the optional real-AI demo. Any vision-capable model can be specified via the `OPENAI_VISION_MODEL` environment variable (defaults to `gpt-4o-mini`). Examples:
+This project includes an optional Gemini Vision demo that uses the Google Gemini (GenAI) SDK. The Gemini client expects URL-based images and defaults to `models/gemini-2.5-flash` unless overridden.
+
+- Install the SDK (required for real Gemini demos):
+
+```bash
+pip install google-genai
+```
+
+- Set your API key via `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) before running the Gemini demo. Examples:
 
 PowerShell (temporary session):
 
 ```powershell
-$env:OPENAI_API_KEY = "your_key"
-python scripts/run_demo_real_ai.py
+$env:GEMINI_API_KEY = "your_key"
+python scripts/run_demo_real_gemini.py
 ```
 
 PowerShell (persist across sessions):
 
 ```powershell
-setx OPENAI_API_KEY "your_key"
+setx GEMINI_API_KEY "your_key"
 # close and reopen your terminal for the change to take effect
-python scripts/run_demo_real_ai.py
+python scripts/run_demo_real_gemini.py
 ```
 
 macOS / Linux (bash/zsh):
 
 ```bash
-export OPENAI_API_KEY=your_key
-python scripts/run_demo_real_ai.py
+export GEMINI_API_KEY=your_key
+python scripts/run_demo_real_gemini.py
 ```
 
 Local development using a `.env` file (recommended for local testing only):
 
-1. Create a `.env` file in the repository root:
-
 ```
-OPENAI_API_KEY=your_key
-```
-
-2. Ensure `.env` is listed in `.gitignore` (already added).
-3. Install `python-dotenv` and load it in your script (optional):
-
-```bash
-pip install python-dotenv
+GEMINI_API_KEY=your_key
+GEMINI_MODEL=models/gemini-2.5-flash  # optional
 ```
 
-```python
-from dotenv import load_dotenv
-load_dotenv()  # loads variables from .env into the environment
-```
+The demo will gracefully fall back to the deterministic local mock client if `google-genai` is not installed; the script prints a helpful message in that case.
 
 **Security note:** Keep API keys out of source control. Use CI secrets or a secrets manager for production.
 
-Optional extensions include adding runtime dependencies to `requirements.txt`, integrating a real vision model, and expanding automated tests. Make `How to run the demo` and `Testing` sections optional additions upon request.
+Optional extensions include adding runtime dependencies to `requirements.txt`, integrating other vision models, and expanding automated tests.
