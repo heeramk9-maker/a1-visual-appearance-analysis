@@ -117,6 +117,13 @@ pip install -r requirements.txt
 python scripts/run_demo_mock.py
 ```
 
+**Outputs directory layout**
+
+- `outputs/sync/` — files written by synchronous runners (folder, Excel, and sync demos)
+- `outputs/async/` — files written by asynchronous runners
+
+Both directories contain functionally equivalent JSON and CSV outputs; async runners are provided for throughput improvements and do not change the output schema or aggregation semantics.
+
 **Run with Excel input**
 
 ```bash

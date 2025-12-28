@@ -153,10 +153,7 @@ async def main_async(concurrency: int = 5) -> None:
         result_files = export_product_result(
             agg,
             product_id="real_gemini_demo_output",
-            output_dir="outputs",
-            as_csv=True,
-        )
-
+        output_dir="outputs/async",
         print("-" * 60)
         print("✅ Export complete:")
         print("-" * 60)

@@ -100,7 +100,7 @@ def main() -> None:
     output = export_product_result(
         aggregated,
         product_id=folder.name,
-        output_dir="outputs",
+        output_dir="outputs/sync",
         as_csv=True,
     )
 

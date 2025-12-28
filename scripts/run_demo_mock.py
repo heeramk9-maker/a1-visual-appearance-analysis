@@ -34,8 +34,8 @@ def run_demo():
     agg = aggregate_results([single])
     print("Aggregated result:", agg)
 
-    # write demo output files under outputs/demo_output.*
-    res = export_product_result(agg, product_id="demo_output", output_dir="outputs", as_csv=True)
+    # write demo output files under outputs/sync/demo_output.*
+    res = export_product_result(agg, product_id="demo_output", output_dir="outputs/sync", as_csv=True)
     print("Wrote:", res)
 
 

@@ -59,7 +59,7 @@ async def main_async(concurrency: int = 5) -> None:
     res = export_product_result(
         agg,
         product_id="real_openai_demo_output",
-        output_dir="outputs",
+        output_dir="outputs/async",
         as_csv=True,
     )
     print("Wrote:", res)

@@ -126,15 +126,15 @@ async def main_async(concurrency: int = 5) -> None:
         sample_keys = list(final_results.keys())[:3]
         print("Sample product ids:", sample_keys)
 
-    out_path = Path("outputs")
+    out_path = Path("outputs/async")
     out_path.mkdir(parents=True, exist_ok=True)
-    json_path = out_path / "excel_run_results_async.json"
+    json_path = out_path / "excel_run_results.json"
     with json_path.open("w", encoding="utf-8") as fh:
         json.dump(final_results, fh, indent=2, ensure_ascii=False)
 
     if errors:
-        print("Some products failed during processing. See 'outputs/excel_run_errors_async.json' for details.")
-        err_path = out_path / "excel_run_errors_async.json"
+        print("Some products failed during processing. See 'outputs/async/excel_run_errors.json' for details.")
+        err_path = out_path / "excel_run_errors.json"
         with err_path.open("w", encoding="utf-8") as fh:
             json.dump(errors, fh, indent=2, ensure_ascii=False)
     else:

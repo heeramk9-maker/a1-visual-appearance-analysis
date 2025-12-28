@@ -149,7 +149,7 @@ def run_demo_real_gemini():
         result_files = export_product_result(
             agg,
             product_id="real_gemini_demo_output",
-            output_dir="outputs",
+            output_dir="outputs/sync",
             as_csv=True,
         )
 

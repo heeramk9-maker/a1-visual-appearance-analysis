@@ -52,7 +52,7 @@ def run_demo_real_openai():
     res = export_product_result(
         agg,
         product_id="real_openai_demo_output",
-        output_dir="outputs",
+        output_dir="outputs/sync",
         as_csv=True,
     )
     print("Wrote:", res)

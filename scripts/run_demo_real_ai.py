@@ -163,7 +163,7 @@ def run_demo_real_ai():
     print("Aggregated result:", agg)
 
     res = export_product_result(
-        agg, product_id="real_ai_demo_output", output_dir="outputs", as_csv=True
+        agg, product_id="real_ai_demo_output", output_dir="outputs/sync", as_csv=True
     )
     print("Wrote:", res)
 

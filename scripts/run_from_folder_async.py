@@ -85,7 +85,7 @@ async def main_async(folder: Path, concurrency: int = 5) -> None:
     output = export_product_result(
         aggregated,
         product_id=folder.name,
-        output_dir="outputs",
+        output_dir="outputs/async",
         as_csv=True,
     )
 

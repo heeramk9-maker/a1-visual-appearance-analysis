@@ -114,14 +114,14 @@ if final_results:
     sample_keys = list(final_results.keys())[:3]
     print("Sample product ids:", sample_keys)
 
-out_path = Path("outputs")
+out_path = Path("outputs/sync")
 out_path.mkdir(parents=True, exist_ok=True)
 json_path = out_path / "excel_run_results.json"
 with json_path.open("w", encoding="utf-8") as fh:
     json.dump(final_results, fh, indent=2, ensure_ascii=False)
 
 if errors:
-    print("Some products failed during processing. See 'outputs/excel_run_errors.json' for details.")
+    print("Some products failed during processing. See 'outputs/sync/excel_run_errors.json' for details.")
     err_path = out_path / "excel_run_errors.json"
     with err_path.open("w", encoding="utf-8") as fh:
         json.dump(errors, fh, indent=2, ensure_ascii=False)
