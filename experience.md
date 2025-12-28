@@ -69,13 +69,31 @@ This would improve accessibility without altering the core pipeline.
 
 ### 2. Asynchronous and Parallel Processing
 
-The current implementation prioritizes clarity over throughput. With more time, I would:
+The project already includes both synchronous and asynchronous runners; with more time, I would:
 
-- Add asynchronous or batched inference calls  
-- Parallelize multi-image analysis  
-- Implement basic retry and rate-limiting logic  
+- Expand async batching for higher throughput  
+- Add retry/backoff and rate-limiting strategies  
+- Add more stress and concurrency tests
 
-### 3. Persistent Caching
+### 3. Observable Runs (Added)
+
+A recent addition improves console-only observability across all runners without changing any core behavior or output schema:
+
+- A lightweight helper `scripts/tools/run_metrics.py` exposes:
+  - `analysis_timer()` — context manager usable as `with` or `async with` to print `Analyzing...` and `Analyzing completed in <X.XX>s` with wall-clock or awaited runtime.
+  - `print_model_used(client)` — prints `Model Used: <model-name>` or `Model Used: mock-client` safely.
+- All runners under `scripts/` now print these lines in order:
+  1. `Processed products: <count>`
+  2. `Model Used: <model-name or mock-client>`
+  3. `Analyzing...`
+  4. `Analyzing completed in <X.XX>s`
+  5. `Sample product ids: [...]`
+  6. `No processing errors detected.` (if no errors)
+  7. `Wrote results to: <output-path>`
+
+These prints are console-only and do not alter JSON/CSV outputs or aggregation behavior.
+
+### 4. Persistent Caching
 
 Extend the existing in-memory cache to:
 
@@ -83,22 +101,13 @@ Extend the existing in-memory cache to:
 - Avoid re-processing identical images  
 - Support cache invalidation by model or prompt version  
 
-### 4. Stronger Validation and Testing
+### 5. Stronger Validation and Testing (Updated)
 
-Expand testing beyond structural validation to include:
+Testing has been extended and developer ergonomics improved:
 
-- Golden test cases with expected visual outcomes  
-- Regression tests for prompt changes  
-- Stress tests using noisy or ambiguous images  
-
-### 5. Multi-Provider Fallback Strategy
-
-Formalize support for multiple vision providers by:
-
-- Implementing automatic fallback logic  
-- Comparing outputs across providers  
-- Calibrating confidence scores per model  
+- A `conftest.py` helper ensures pytest can import the `app` package and local tests easily.
+- Additions include async pipeline tests and cache-focused tests.
 
 ### Final Reflection
 
-Rather than aiming for feature completeness, this project focuses on demonstrating **clear reasoning, modular design, and safe AI integration**. With more time, the priority would be improving scale, UX, and operational robustness while preserving the core principles of transparency and correctness.
+This project prioritizes **clear reasoning, modular design, safe AI integration, and developer ergonomics**. The recent observability and testing improvements make the repo easier to run and verify while keeping the core pipeline unchanged and stable.

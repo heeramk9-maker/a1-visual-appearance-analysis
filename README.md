@@ -1,63 +1,76 @@
-# A1.0 Visual Appearance Analysis System
+# A1.0 Visual Appearance Analysis — Concise Design Write-up
 
-A modular prototype for visual appearance reasoning (A1.0) over product images, built as part of the Lenskart AI assignment.
+## Overview
 
-The system analyzes one or more product images using a vision-capable AI model and produces structured, explainable, machine-readable visual measurements based strictly on observable appearance.
+- Purpose: Analyze product *visual appearance* only. No merchandising, intent, or business logic is inferred.
+- Supports multiple images per product; outputs continuous scores in the range −5.0 … +5.0.
+- Exports product-level results as JSON and CSV.
 
+## High-level Architecture
 
-## 1. Overview
+Product images (URLs / local files)
+    │
+    ▼
+Input normalization & validation
+    │
+    ▼
+Vision client (mock or real provider)
+    │
+    ▼
+Per-image parsing → schema validation
+    │
+    ▼
+Dimension-wise aggregation → product output (JSON, CSV)
 
-This project implements a visual product measurement pipeline that:
+## Key Assumptions & Design Decisions
 
-- Accepts one or more images per product
-- Uses a vision-enabled AI model (or mock) for analysis
-- Produces continuous scores (−5.0 to +5.0) across independent visual dimensions
-- Aggregates multi-image outputs into a conservative consensus
-- Exports results in JSON / CSV formats
+- Visual-only: results reflect observable appearance only; no business or merchandising inference.
+- Provider-agnostic client abstraction to allow mock testing and real-provider demos.
+- Schema-first parsing and conservative aggregation to surface disagreement across images.
+- Both synchronous and asynchronous runners are provided: sync for parity and async for throughput.
 
-The system is intentionally designed to:
+## Limitations & Future Improvements
 
-- Avoid business logic or merchandising assumptions
-- Never infer missing information
-- Fail safely on invalid inputs or model outputs
+- Visual judgments are subjective and depend on image quality and framing.
+- CLI demo (not a production service); no long-term persistence in current scope.
+- Future work: lightweight UI, persistent caching, multi-provider fallback, confidence calibration.
 
+## Setup Instructions
 
-## 2. Visual Dimensions (A1.0)
-
-Each dimension is evaluated independently and includes a score, justification, and uncertainty flag.
-
-- Gender Expression (masculine → feminine)
-- Visual Weight (light → heavy presence)
-- Embellishment (simple → ornate)
-- Unconventionality (classic → avant-garde)
-- Formality (casual → formal)
-
-Scores are continuous in the range −5.0 to +5.0.
-
-
-## 3. High-Level Architecture
-
+```bash
+python -m venv .venv
+# Windows (PowerShell)
+.\.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
-Product Images (URLs / Excel)
-            │
-            ▼
-      Input Handler
- (validation & normalization)
-            │
-            ▼
-     Vision Client
-  (mock or real AI)
-            │
-            ▼
-  Visual Parsing Layer
- (scores & attributes)
-            │
-            ▼
-   Schema Validation
- (strict contract)
-            │
-            ▼
-   Per-Image Results
+
+## Steps to Run Locally
+
+Synchronous runners:
+- Mock demo: python scripts/run_demo_mock.py
+- Folder-based sync: python scripts/run_from_folder.py <folder_path>
+- Excel (sync): python scripts/run_from_excel.py --excel-file <path>
+
+Asynchronous (non-blocking) runners:
+- Folder-based async: python scripts/run_demo_async.py <folder_path> [concurrency]
+- Excel (async): python scripts/run_from_excel_async.py --excel-file <path> --concurrency <N>
+
+Optional real-provider demo (Gemini): python scripts/run_demo_real_gemini.py (requires GEMINI_API_KEY)
+
+Run tests: pytest -q
+
+## Dependencies / Assumptions
+
+- Python 3.10+ (tested on 3.12)
+- `pip install -r requirements.txt` for core dependencies
+- Optional: `google-genai` for Gemini demos and `python-dotenv` for .env loading
+- Real-AI demos expect URL-based images; local-file demos support folder runners
+
+---
+
+This concise write-up is formatted for submission review and omits implementation detail. For full technical context, see the source files under `app/` and `scripts/`.
             │
             ▼
    Multi-Image Aggregator
@@ -107,7 +120,10 @@ This ensures robustness when images show different angles, lighting, or partial 
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # or .\.venv\Scripts\activate on Windows
+# Windows PowerShell
+.\.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -117,12 +133,26 @@ pip install -r requirements.txt
 python scripts/run_demo_mock.py
 ```
 
+**Console observability (what you'll see)**
+
+Runners now print a compact, consistent summary for each run (console-only, does not change outputs):
+
+- Processed products: <count>
+- Model Used: <model-name or mock-client>
+- Analyzing...
+- Analyzing completed in <X.XX>s
+- Sample product ids: [...]
+- No processing errors detected.
+- Wrote results to: <output-path>
+
+This behavior is implemented via `scripts/tools/run_metrics.py` which exposes `analysis_timer()` and `print_model_used()` and is used by all runners (sync + async).
+
 **Outputs directory layout**
 
 - `outputs/sync/` — files written by synchronous runners (folder, Excel, and sync demos)
 - `outputs/async/` — files written by asynchronous runners
 
-Both directories contain functionally equivalent JSON and CSV outputs; async runners are provided for throughput improvements and do not change the output schema or aggregation semantics.
+Both directories contain the same JSON/CSV schema and the runners remain fully backward compatible.
 
 **Run with Excel input (sync)**
 
@@ -138,9 +168,17 @@ python scripts/run_from_excel.py --excel-file data/A1.0_data_product_images.xlsx
 python scripts/run_from_excel_async.py --excel-file data/A1.0_data_product_images.xlsx --concurrency 5
 ```
 
+**Run tests**
+
+```bash
+pytest -q
+```
+
+A lightweight `conftest.py` (repo root) ensures pytest can import the `app` package and local tests easily.
+
 **Optional: Real AI mode**
 
-Set the API key via environment variables or .env (never commit keys).
+Set the API key via environment variables or a `.env` file (never commit keys).
 
 
 ## 7. Example Output (Simplified)
