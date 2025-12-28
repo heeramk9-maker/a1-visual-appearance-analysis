@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+venv/
+
+# Env secrets
+.env
+
+# Test / cache
+.pytest_cache/
+.pytest_cache
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Outputs (optional – see note below)
+outputs/*
+!outputs/README.md
