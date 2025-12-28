@@ -63,7 +63,6 @@ def run_demo_real_gemini():
     try:
         print("🔧 Initializing Gemini client...")
         client = GeminiVisionClient(api_key=api_key)
-        print(f"   Using model: {client.model}\n")
     except Exception as e:
         msg = str(e)
         # Graceful fallback for local dev when google-genai isn't installed
@@ -76,6 +75,14 @@ def run_demo_real_gemini():
         else:
             print(f"\n❌ Failed to initialize client: {e}\n")
             return
+
+    # Import observability helpers
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from tools.run_metrics import analysis_timer, print_model_used
+
+    # Top-level observability
+    print("Processed products:", 1)
+    print_model_used(client)
 
     # Define test image
     image_ref = {
@@ -96,31 +103,32 @@ def run_demo_real_gemini():
     from app.cache import ResultCache
     demo_cache = ResultCache(verbose=True)
 
-    # Run inference
+    # Run inference (timed)
     try:
-        print("🤖 Running inference...")
-        single = process_single_image(
-            image=image_ref,
-            prompts=prompts,
-            client=client,
-            cache=demo_cache,
-        )
-        print("Cache stats after inference:", demo_cache.stats())
-        
-        # Check for errors
-        if single.get("errors"):
-            print("\n⚠️  Errors encountered during processing:")
-            for err in single["errors"]:
-                print(f"   Stage: {err.get('stage', 'unknown')}")
-                print(f"   Error: {err.get('error', 'unknown')}\n")
-        else:
-            print("✅ Inference completed successfully\n")
-        
-        print("-" * 60)
-        print("📊 Per-image output:")
-        print("-" * 60)
-        print(json.dumps(single, indent=2, default=str))
-        print()
+        with analysis_timer():
+            print("🤖 Running inference...")
+            single = process_single_image(
+                image=image_ref,
+                prompts=prompts,
+                client=client,
+                cache=demo_cache,
+            )
+            print("Cache stats after inference:", demo_cache.stats())
+
+            # Check for errors
+            if single.get("errors"):
+                print("\n⚠️  Errors encountered during processing:")
+                for err in single["errors"]:
+                    print(f"   Stage: {err.get('stage', 'unknown')}")
+                    print(f"   Error: {err.get('error', 'unknown')}\n")
+            else:
+                print("✅ Inference completed successfully\n")
+
+            print("-" * 60)
+            print("📊 Per-image output:")
+            print("-" * 60)
+            print(json.dumps(single, indent=2, default=str))
+            print()
 
     except Exception as e:
         print(f"\n❌ Inference failed: {e}\n")
@@ -159,6 +167,12 @@ def run_demo_real_gemini():
         for fmt, path in result_files.items():
             print(f"   {fmt.upper()}: {path}")
         print()
+
+        # Final observability output
+        print("Sample product ids:", ["real_gemini_demo_output"])
+        if not single.get("errors"):
+            print("No processing errors detected.")
+        print("Wrote results to:", result_files.get("json"))
 
     except Exception as e:
         print(f"\n⚠️  Export failed: {e}\n")

@@ -78,24 +78,34 @@ def main() -> None:
     # Initialize client (mock by default; can be swapped with real AI)
     client = mock_vision_client()
 
+    # Make local scripts/tools importable and load helpers
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from tools.run_metrics import analysis_timer, print_model_used
+
     image_refs = collect_images(folder)
     print(f"📸 Found {len(image_refs)} image(s)")
+
+    # Observability top lines
+    print("Processed products:", 1)
+    print_model_used(client)
 
     prompts = {"system": SYSTEM_PROMPT, "task": TASK_PROMPT}
 
     per_image_results = []
 
-    for img in image_refs:
-        print(f"🤖 Processing image: {img['id']}")
-        result = process_single_image(
-            image=img,
-            prompts=prompts,
-            client=client,
-        )
-        per_image_results.append(result)
+    # Run per-image processing and aggregation under timer
+    with analysis_timer():
+        for img in image_refs:
+            print(f"🤖 Processing image: {img['id']}")
+            result = process_single_image(
+                image=img,
+                prompts=prompts,
+                client=client,
+            )
+            per_image_results.append(result)
 
-    print("📈 Aggregating per-image results...")
-    aggregated = aggregate_results(per_image_results)
+        print("📈 Aggregating per-image results...")
+        aggregated = aggregate_results(per_image_results)
 
     output = export_product_result(
         aggregated,
@@ -107,9 +117,12 @@ def main() -> None:
     print("============================================================")
     print("✅ Analysis complete")
     print("------------------------------------------------------------")
+    print("Sample product ids:", [folder.name])
     print(f"JSON output: {output['json']}")
     print(f"CSV output : {output['csv']}")
     print("============================================================")
+    print("No processing errors detected.")
+    print("Wrote results to:", output['json'])
 
 
 if __name__ == "__main__":

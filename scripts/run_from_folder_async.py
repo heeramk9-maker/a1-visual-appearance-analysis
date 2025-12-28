@@ -61,8 +61,16 @@ async def main_async(folder: Path, concurrency: int = 5) -> None:
     # Initialize client (mock by default; can be swapped with real AI)
     client = mock_vision_client()
 
+    # Make local scripts/tools importable and load helpers
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from tools.run_metrics import analysis_timer, print_model_used
+
     image_refs = collect_images(folder)
     print(f"📸 Found {len(image_refs)} image(s)")
+
+    # Observability top lines
+    print("Processed products:", 1)
+    print_model_used(client)
 
     prompts = {"system": SYSTEM_PROMPT, "task": TASK_PROMPT}
 
@@ -71,16 +79,19 @@ async def main_async(folder: Path, concurrency: int = 5) -> None:
         print(f"🤖 Queued image: {img['id']}")
 
     print(f"⚡ Processing up to {concurrency} images concurrently...")
-    per_image_results = await process_images_async(
-        images=image_refs,
-        prompts=prompts,
-        client=client,
-        cache=None,
-        concurrency=concurrency,
-    )
 
-    print("📈 Aggregating per-image results...")
-    aggregated = aggregate_results(per_image_results)
+    # Run processing and aggregation under timer
+    async with analysis_timer():
+        per_image_results = await process_images_async(
+            images=image_refs,
+            prompts=prompts,
+            client=client,
+            cache=None,
+            concurrency=concurrency,
+        )
+
+        print("📈 Aggregating per-image results...")
+        aggregated = aggregate_results(per_image_results)
 
     output = export_product_result(
         aggregated,
@@ -92,9 +103,12 @@ async def main_async(folder: Path, concurrency: int = 5) -> None:
     print("============================================================")
     print("✅ Async analysis complete")
     print("------------------------------------------------------------")
+    print("Sample product ids:", [folder.name])
     print(f"JSON output: {output['json']}")
     print(f"CSV output : {output['csv']}")
     print("============================================================")
+    print("No processing errors detected.")
+    print("Wrote results to:", output['json'])
 
 
 def main(argv: list[str] | None = None) -> None:

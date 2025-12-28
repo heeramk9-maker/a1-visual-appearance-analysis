@@ -32,6 +32,14 @@ def run_demo_real_openai():
 
     client = OpenAIVisionClient(api_key)
 
+    # Import observability helpers
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from tools.run_metrics import analysis_timer, print_model_used
+
+    # Observability lines
+    print("Processed products:", 1)
+    print_model_used(client)
+
     image_ref = {
         "id": "real-openai-img-1",
         "source": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200&q=80",
@@ -43,11 +51,13 @@ def run_demo_real_openai():
         "task": TASK_PROMPT,
     }
 
-    single = process_single_image(image_ref, prompts=prompts, client=client)
-    print("Per-image output:", single)
+    # Run inference and aggregation under timer
+    with analysis_timer():
+        single = process_single_image(image_ref, prompts=prompts, client=client)
+        print("Per-image output:", single)
 
-    agg = aggregate_results([single])
-    print("Aggregated result:", agg)
+        agg = aggregate_results([single])
+        print("Aggregated result:", agg)
 
     res = export_product_result(
         agg,
@@ -55,7 +65,10 @@ def run_demo_real_openai():
         output_dir="outputs/sync",
         as_csv=True,
     )
-    print("Wrote:", res)
+    print("Sample product ids:", ["real_openai_demo_output"])
+    if not single.get("errors"):
+        print("No processing errors detected.")
+    print("Wrote results to:", res.get("json"))
 
 
 if __name__ == "__main__":

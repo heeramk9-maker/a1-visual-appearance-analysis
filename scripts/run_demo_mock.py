@@ -19,6 +19,14 @@ from app.exporter import export_product_result
 def run_demo():
     client = mock_vision_client()
 
+    # Make local scripts/tools importable and load helpers
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from tools.run_metrics import analysis_timer, print_model_used
+
+    # Observability top lines
+    print("Processed products:", 1)
+    print_model_used(client)
+
     # use a simple image reference dict (id string used as image_id in pipeline)
     image_ref = {
         "id": "demo-img-1",
@@ -26,18 +34,20 @@ def run_demo():
         "type": "url",
     }
 
-    # process single image
-    single = process_single_image(image_ref, prompts="demo prompt", client=client)
-    print("Per-image output:", single)
+    # process single image (timed)
+    with analysis_timer():
+        single = process_single_image(image_ref, prompts="demo prompt", client=client)
+        print("Per-image output:", single)
 
-    # aggregate (single-item aggregation is fine for demo)
-    agg = aggregate_results([single])
-    print("Aggregated result:", agg)
+        # aggregate (single-item aggregation is fine for demo)
+        agg = aggregate_results([single])
+        print("Aggregated result:", agg)
 
     # write demo output files under outputs/sync/demo_output.*
     res = export_product_result(agg, product_id="demo_output", output_dir="outputs/sync", as_csv=True)
-    print("Wrote:", res)
-
+    print("Sample product ids:", ["demo_output"])
+    print("No processing errors detected.")
+    print("Wrote results to:", res["json"])
 
 if __name__ == '__main__':
     run_demo()

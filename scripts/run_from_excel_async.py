@@ -73,55 +73,64 @@ async def main_async(excel_path: Path, concurrency: int = 5) -> None:
     print(f"Using product column: {product_col}; image columns: {image_cols}")
 
     client = mock_vision_client()
+
+    # Make local scripts/tools importable and load helpers
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from tools.run_metrics import analysis_timer, print_model_used
+
     prompts = {"system": SYSTEM_PROMPT, "task": TASK_PROMPT}
 
-    final_results = {}
-    errors = {}
-
-    # 2. Group images per product
+    # Precompute tasks (products with at least one image)
+    tasks: list[tuple[str, list[str]]] = []
     for product_id, group in df.groupby(product_col):
-        # collect all image-like columns into a single list of URLs for this product
         image_values = []
         for _, row in group.iterrows():
             for c in image_cols:
                 val = row.get(c)
                 if pd.notna(val) and str(val).strip():
                     image_values.append(str(val).strip())
-        image_urls = image_values
+        if image_values:
+            tasks.append((product_id, image_values))
 
-        if not image_urls:
-            continue
+    # Observability lines
+    print("Processed products:", len(tasks))
+    print_model_used(client)
 
-        try:
-            images = load_images(image_urls)
-        except Exception as e:
-            errors[product_id] = {"stage": "load_images", "error": str(e)}
-            continue
+    final_results = {}
+    errors = {}
 
-        # Queue and run images concurrently for this product
-        try:
-            per_image_outputs = await process_images_async(
-                images=images,
-                prompts=prompts,
-                client=client,
-                cache=None,
-                concurrency=concurrency,
-            )
-        except Exception as e:
-            errors[product_id] = {"stage": "async_processing", "error": str(e)}
-            continue
+    # 2. Group images per product (timed)
+    async with analysis_timer():
+        for product_id, image_urls in tasks:
+            try:
+                images = load_images(image_urls)
+            except Exception as e:
+                errors[product_id] = {"stage": "load_images", "error": str(e)}
+                continue
 
-        # 3. Aggregate per product
-        try:
-            aggregated = aggregate_results(per_image_outputs)
-        except Exception as e:
-            errors[product_id] = {"stage": "aggregate", "error": str(e)}
-            continue
+            # Queue and run images concurrently for this product
+            try:
+                per_image_outputs = await process_images_async(
+                    images=images,
+                    prompts=prompts,
+                    client=client,
+                    cache=None,
+                    concurrency=concurrency,
+                )
+            except Exception as e:
+                errors[product_id] = {"stage": "async_processing", "error": str(e)}
+                continue
 
-        final_results[product_id] = aggregated
+            # 3. Aggregate per product
+            try:
+                aggregated = aggregate_results(per_image_outputs)
+            except Exception as e:
+                errors[product_id] = {"stage": "aggregate", "error": str(e)}
+                continue
+
+            final_results[product_id] = aggregated
 
     # 4. Print summary and save results
-    print("Processed products:", len(final_results))
     if final_results:
         sample_keys = list(final_results.keys())[:3]
         print("Sample product ids:", sample_keys)
